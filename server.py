@@ -1,12 +1,11 @@
 import os
 import socket
-import sys
+
+sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+server_address = '127.0.0.1'
 
 
 def server():
-    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    server_address = './socket_file'
-
     # check if file exists
     try:
         os.unlink(server_address)
@@ -18,33 +17,23 @@ def server():
     # bind a socket to server address
     sock.bind(server_address)
 
-    # wait connection request
+    # wait for a connection request
     sock.listen(1)
 
     while True:
-
         # accept connection from client-side
         connection, client_address = sock.accept()
         try:
-            print('connection from', client_address)
+            print('Connection from'.format(client_address))
 
-            while True:
-                data = connection.recv(32)
+            data = connection.recv(1024)
+            decoded_data = data.decode('utf-8')
 
-                decoded_data = data.decode('utf-8')
-                print('Received ' + decoded_data)
+            print('Received', decoded_data)
 
-                if data:
+        except ConnectionError as e:
+            print(e)
 
-                    response = 'Processing ' + decoded_data
-
-                    # return message to client
-                    connection.sendall(response.encode())
-
-                # done a loop if data is not sent from client-side
-                else:
-                    print('no data from', client_address)
-                    break
         finally:
             print("Closing current connection")
             connection.close()
