@@ -1,46 +1,29 @@
 import socket
-import sys
 
 sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-server_address = '127.0.0.1'
-client_address = '127.0.0.2'
 
 
-def client():
-    print('Connecting to {}'.format(server_address))
+class Client:
+    def __init__(self) -> None:
+        self.sock = socket.socket(family=socket.AF_UNIX, type=socket.SOCK_STREAM)
+        self.server_address = "127.0.0.1"
 
-    try:
-        sock.connect(server_address)
-        print('Successfully Connected!')
-
-    except sock.error as e:
-        print(e)
-
-    except FileNotFoundError:
-
-        # stop program
-        # A status code of 1 indicates a program error
-        sys.exit(1)
-
-    message = b'Sending a message to the server side'
-
-    try:
-        sock.sendto(message, server_address)
-        sock.settimeout(2)
-
+    def connect_server(self):
         try:
-            while True:
-                resource = sock.recv(64)
-                if resource:
-                    print('Server response: {}'.format(resource))
-                else:
-                    break
-        except TimeoutError as e:
-            print(e)
-    finally:
-        print('closing socket')
-        sock.close()
+            self.sock.connect(self.server_address)
+        except socket.error as err:
+            print(err)
+            exit()
+
+    def send_input(self, input):
+        self.sock.sendall(input.encode("utf-8"))
+
+    def receive_from_server(self):
+        fake_content = ""
+        self.sock.settimeout(1)
+        fake_content += self.sock.recv(32).decode("utf-8")
+        return fake_content
 
 
-if __name__ == '__main__':
-    client()
+def close(self):
+    self.sock.close()

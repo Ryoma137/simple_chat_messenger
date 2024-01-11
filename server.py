@@ -1,43 +1,48 @@
 import os
 import socket
-
-sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-server_address = '127.0.0.1'
+from faker import Faker
 
 
-def server():
-    # check if file exists
-    try:
-        os.unlink(server_address)
-    except FileNotFoundError:
-        pass
-
-    print('Starting up on {}'.format(server_address))
-
-    # bind a socket to server address
-    sock.bind(server_address)
-
-    # wait for a connection request
-    sock.listen(1)
-
-    while True:
-        # accept connection from client-side
-        connection, client_address = sock.accept()
+class Server:
+    def __init__(self) -> None:
+        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.server_address = "127.0.0.1"
         try:
-            print('Connection from'.format(client_address))
+            os.unlink(self.server_address)
+        except FileNotFoundError:
+            pass
 
-            data = connection.recv(1024)
-            decoded_data = data.decode('utf-8')
+        print(f"Starting up on {self.server_address}")
 
-            print('Received', decoded_data)
+        self.sock.bind(self.server_address)
+        self.sock.listen(1)
 
-        except ConnectionError as e:
-            print(e)
+    def accept_client(self):
+        self.connection, self.client_address = self.sock.accept()
+        print(f"connect address: {self.client_address}")
 
-        finally:
-            print("Closing current connection")
-            connection.close()
+    def receive_and_send_fake(self):
+        user_input = self.connection.recv(16).decode("utf-8")
 
+        fake_content = self.make_fake_content(user_input)
+        self.connection.sendall(fake_content.encode("utf-8"))
 
-if __name__ == '__main__':
-    server()
+    def make_fake_content(self, user_input):
+        fake = Faker()
+
+        fake_content = ""
+        if user_input == "name":
+            fake_content = fake.name()
+        elif user_input == "address":
+            fake_content = fake.address()
+        elif user_input == "email":
+            fake_content = fake.email()
+        elif user_input == "text":
+            fake_content = fake.text()
+        else:
+            fake_content = "please enter a valid value"
+
+        return fake_content
+
+    def close(self):
+        self.connection.close()
